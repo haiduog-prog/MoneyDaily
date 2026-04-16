@@ -4,12 +4,13 @@
   bottom: 0;
   left: 0;
   right: 0;
-  height: var(--bottom-nav-height);
+  height: calc(var(--bottom-nav-height) + env(safe-area-inset-bottom));
   background: var(--bg-surface);
   border-top: 1px solid var(--border-subtle);
   z-index: var(--z-sticky);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
+  padding-bottom: env(safe-area-inset-bottom);
 }
 
 .bottom-nav-item {
