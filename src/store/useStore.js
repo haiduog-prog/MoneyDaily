@@ -4,7 +4,7 @@ import { startOfMonth, endOfMonth, isWithinInterval, parseISO } from 'date-fns'
 import { DEFAULT_CATEGORIES, FALLBACK_CATEGORY } from '../data/categories'
 
 // --- Default budgets for first-time users ---
-const DEFAULT_BUDGET_AMOUNT = 1000000
+const DEFAULT_BUDGET_AMOUNT = 0
 
 export const useStore = create((set, get) => ({
   // ===== STATE =====
