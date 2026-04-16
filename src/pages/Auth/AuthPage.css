@@ -1,0 +1,223 @@
+.auth-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-4);
+  background: var(--bg-base);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Animated blobs */
+.auth-bg {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.auth-bg-blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: 0.12;
+  animation: blobFloat 8s ease-in-out infinite alternate;
+}
+
+.auth-bg-blob-1 {
+  width: 500px;
+  height: 500px;
+  background: var(--primary);
+  top: -150px;
+  left: -150px;
+  animation-duration: 10s;
+}
+
+.auth-bg-blob-2 {
+  width: 400px;
+  height: 400px;
+  background: var(--accent-green);
+  bottom: -100px;
+  right: -100px;
+  animation-duration: 13s;
+  animation-direction: alternate-reverse;
+}
+
+@keyframes blobFloat {
+  from { transform: translate(0, 0) scale(1); }
+  to { transform: translate(30px, 20px) scale(1.1); }
+}
+
+/* Card */
+.auth-card {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 420px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-xl);
+  padding: var(--space-8);
+  box-shadow: var(--shadow-lg), 0 0 60px rgba(108, 99, 255, 0.1);
+}
+
+/* Logo */
+.auth-logo {
+  text-align: center;
+  margin-bottom: var(--space-6);
+}
+
+.auth-logo-icon {
+  font-size: 52px;
+  line-height: 1;
+  margin-bottom: var(--space-2);
+  filter: drop-shadow(0 0 20px rgba(108, 99, 255, 0.5));
+}
+
+.auth-logo-title {
+  font-size: var(--font-size-2xl);
+  font-weight: 800;
+  background: linear-gradient(135deg, var(--text-primary), var(--primary-light));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.auth-logo-sub {
+  font-size: var(--font-size-sm);
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+
+/* Tabs */
+.auth-tabs {
+  display: flex;
+  background: var(--bg-elevated);
+  border-radius: var(--radius-md);
+  padding: 4px;
+  gap: 4px;
+  margin-bottom: var(--space-6);
+}
+
+.auth-tab {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 9px;
+  border-radius: calc(var(--radius-md) - 2px);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--text-muted);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.auth-tab.active {
+  background: var(--primary);
+  color: white;
+  box-shadow: var(--shadow-primary);
+}
+
+/* Form */
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+/* Input with icon */
+.auth-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.auth-input-icon {
+  position: absolute;
+  left: 14px;
+  color: var(--text-muted);
+  pointer-events: none;
+}
+
+.auth-input {
+  padding-left: 40px !important;
+}
+
+.auth-toggle-pw {
+  position: absolute;
+  right: 12px;
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  transition: color var(--transition-fast);
+}
+
+.auth-toggle-pw:hover { color: var(--text-primary); }
+
+/* Forgot link */
+.auth-forgot-link {
+  align-self: flex-end;
+  background: none;
+  border: none;
+  color: var(--primary-light);
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  cursor: pointer;
+  margin-top: -8px;
+  padding: 0;
+  transition: color var(--transition-fast);
+}
+
+.auth-forgot-link:hover { color: var(--primary); }
+
+/* Messages */
+.auth-message {
+  padding: 10px 14px;
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+}
+
+.auth-error {
+  background: var(--accent-red-light);
+  color: var(--accent-red);
+  border: 1px solid rgba(255, 101, 132, 0.2);
+}
+
+.auth-success {
+  background: var(--accent-green-light);
+  color: var(--accent-green);
+  border: 1px solid rgba(16, 217, 160, 0.2);
+}
+
+/* Submit button */
+.auth-submit-btn {
+  width: 100%;
+  padding: 13px;
+  font-size: var(--font-size-base);
+  justify-content: center;
+}
+
+/* Forgot header */
+.auth-forgot-header {
+  text-align: center;
+}
+
+.auth-forgot-header h2 {
+  font-size: var(--font-size-xl);
+  margin-bottom: var(--space-2);
+}
+
+.auth-forgot-header p {
+  font-size: var(--font-size-sm);
+  color: var(--text-muted);
+}
