@@ -2,7 +2,6 @@ import { useState } from 'react'
 import { Plus, Search, Filter, X } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useStore } from '../store/useStore'
-import { CATEGORIES } from '../data/categories'
 import { groupByDate, friendlyDate, formatVND, getCurrentYearMonth } from '../utils/format'
 import TransactionModal from '../components/Transactions/TransactionModal'
 import TransactionItem from '../components/Transactions/TransactionItem'
@@ -11,7 +10,7 @@ import './Transactions.css'
 const MONTHS = Array.from({ length: 12 }, (_, i) => i + 1)
 
 export default function Transactions() {
-  const { getTransactionsByMonth, getTotalByMonth } = useStore()
+  const { getTransactionsByMonth, getTotalByMonth, categories } = useStore()
   const now = getCurrentYearMonth()
   const [year, setYear] = useState(now.year)
   const [month, setMonth] = useState(now.month)
@@ -97,12 +96,12 @@ export default function Transactions() {
             >
               Tất cả
             </button>
-            {CATEGORIES.map((cat) => (
+            {categories.map((cat) => (
               <button
                 key={cat.id}
                 id={`filter-${cat.id}`}
                 className={`cat-filter-pill ${filterCat === cat.id ? 'active' : ''}`}
-                style={filterCat === cat.id ? { background: cat.light, borderColor: cat.color, color: cat.color } : {}}
+                style={filterCat === cat.id ? { background: `${cat.color}22`, borderColor: cat.color, color: cat.color } : {}}
                 onClick={() => setFilterCat(filterCat === cat.id ? 'all' : cat.id)}
               >
                 {cat.icon} {cat.name}

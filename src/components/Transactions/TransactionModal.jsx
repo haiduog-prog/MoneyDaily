@@ -2,15 +2,14 @@ import { useState, useEffect } from 'react'
 import { X, Check } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useStore } from '../../store/useStore'
-import { CATEGORIES } from '../../data/categories'
 import { getTodayStr, formatVND } from '../../utils/format'
 import './TransactionModal.css'
 
 export default function TransactionModal({ isOpen, onClose, editing = null }) {
-  const { addTransaction, updateTransaction } = useStore()
+  const { addTransaction, updateTransaction, categories } = useStore()
   const [form, setForm] = useState({
     amount: '',
-    category: 'food',
+    category: '',
     note: '',
     date: getTodayStr(),
   })
@@ -29,12 +28,17 @@ export default function TransactionModal({ isOpen, onClose, editing = null }) {
       })
       setAmountDisplay(editing.amount.toLocaleString('vi-VN'))
     } else {
-      setForm({ amount: '', category: 'food', note: '', date: getTodayStr() })
+      setForm({
+        amount: '',
+        category: categories[0]?.id || '',
+        note: '',
+        date: getTodayStr(),
+      })
       setAmountDisplay('')
     }
     setErrors({})
     setSubmitError('')
-  }, [editing, isOpen])
+  }, [editing, isOpen, categories])
 
   const handleAmountChange = (e) => {
     const raw = e.target.value.replace(/\D/g, '')
@@ -46,6 +50,7 @@ export default function TransactionModal({ isOpen, onClose, editing = null }) {
     const errs = {}
     if (!form.amount || Number(form.amount) <= 0) errs.amount = 'Nhập số tiền hợp lệ'
     if (!form.date) errs.date = 'Chọn ngày'
+    if (!form.category) errs.category = 'Chọn danh mục'
     return errs
   }
 
@@ -73,7 +78,6 @@ export default function TransactionModal({ isOpen, onClose, editing = null }) {
     <AnimatePresence>
       {isOpen && (
         <>
-          {/* Backdrop */}
           <motion.div
             className="modal-backdrop"
             initial={{ opacity: 0 }}
@@ -81,7 +85,6 @@ export default function TransactionModal({ isOpen, onClose, editing = null }) {
             exit={{ opacity: 0 }}
             onClick={onClose}
           />
-          {/* Modal */}
           <motion.div
             className="modal"
             initial={{ opacity: 0, y: 60, scale: 0.95 }}
@@ -89,7 +92,6 @@ export default function TransactionModal({ isOpen, onClose, editing = null }) {
             exit={{ opacity: 0, y: 60, scale: 0.95 }}
             transition={{ type: 'spring', damping: 28, stiffness: 400 }}
           >
-            {/* Header */}
             <div className="modal-header">
               <h3 className="modal-title">
                 {editing ? '✏️ Sửa giao dịch' : '➕ Thêm chi tiêu'}
@@ -122,18 +124,18 @@ export default function TransactionModal({ isOpen, onClose, editing = null }) {
                 )}
               </div>
 
-              {/* Category Grid */}
+              {/* Category Grid — from user's Supabase categories */}
               <div className="form-group">
                 <label className="form-label">Danh mục</label>
                 <div className="category-grid">
-                  {CATEGORIES.map((cat) => (
+                  {categories.map((cat) => (
                     <button
                       key={cat.id}
                       type="button"
                       id={`cat-${cat.id}`}
                       className={`category-chip ${form.category === cat.id ? 'selected' : ''}`}
                       style={form.category === cat.id ? {
-                        background: cat.light,
+                        background: `${cat.color}22`,
                         borderColor: cat.color,
                         color: cat.color,
                       } : {}}
@@ -145,6 +147,7 @@ export default function TransactionModal({ isOpen, onClose, editing = null }) {
                     </button>
                   ))}
                 </div>
+                {errors.category && <span className="form-error">{errors.category}</span>}
               </div>
 
               {/* Note */}
@@ -175,14 +178,12 @@ export default function TransactionModal({ isOpen, onClose, editing = null }) {
                 {errors.date && <span className="form-error">{errors.date}</span>}
               </div>
 
-              {/* Submit error */}
               {submitError && (
                 <div className="form-error" style={{ padding: '8px 12px', background: 'var(--accent-red-light)', borderRadius: '8px' }}>
                   ⚠️ {submitError}
                 </div>
               )}
 
-              {/* Submit */}
               <div className="modal-actions">
                 <button type="button" className="btn btn-ghost" onClick={onClose} disabled={submitting}>
                   Hủy

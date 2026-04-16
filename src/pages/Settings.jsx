@@ -3,16 +3,19 @@ import { Trash2, Download, AlertTriangle, LogOut, User } from 'lucide-react'
 import { useStore } from '../store/useStore'
 import { useAuth } from '../contexts/AuthContext'
 import { formatVND, getCurrentYearMonth } from '../utils/format'
-import { CATEGORIES } from '../data/categories'
+import CategoryModal from '../components/Categories/CategoryModal'
 import { supabase } from '../lib/supabase'
 import './Settings.css'
 
 export default function Settings() {
-  const { transactions, getTotalByMonth } = useStore()
+  const { transactions, categories, getTotalByMonth, deleteCategory } = useStore()
   const { user, signOut } = useAuth()
   const { year, month } = getCurrentYearMonth()
   const [confirmClear, setConfirmClear] = useState(false)
   const [signingOut, setSigningOut] = useState(false)
+  const [catModalOpen, setCatModalOpen] = useState(false)
+  const [editingCat, setEditingCat] = useState(null)
+  const [deletingCat, setDeletingCat] = useState(null)
 
   const total = getTotalByMonth(year, month)
   const allTotal = transactions.reduce((s, t) => s + t.amount, 0)
@@ -20,7 +23,7 @@ export default function Settings() {
   const handleExport = () => {
     const header = 'Ngày,Danh mục,Ghi chú,Số tiền\n'
     const rows = transactions.map((tx) => {
-      const cat = CATEGORIES.find((c) => c.id === tx.category)?.name || tx.category
+      const cat = categories.find((c) => c.id === tx.category)?.name || tx.category
       return `${tx.date},"${cat}","${tx.note}",${tx.amount}`
     }).join('\n')
     const blob = new Blob(['\uFEFF' + header + rows], { type: 'text/csv;charset=utf-8;' })
@@ -46,6 +49,24 @@ export default function Settings() {
     } else {
       setConfirmClear(true)
       setTimeout(() => setConfirmClear(false), 4000)
+    }
+  }
+
+  const handleEditCategory = (cat) => {
+    setEditingCat(cat)
+    setCatModalOpen(true)
+  }
+
+  const handleDeleteCategory = async (e, cat) => {
+    e.stopPropagation()
+    if (deletingCat === cat.id) return
+    if (window.confirm(`Bạn có chắc chắn muốn xóa danh mục "${cat.name}"? Các giao dịch cũ sẽ hiển thị "Không rõ".`)) {
+      setDeletingCat(cat.id)
+      try {
+        await deleteCategory(cat.id)
+      } finally {
+        setDeletingCat(null)
+      }
     }
   }
 
@@ -120,12 +141,34 @@ export default function Settings() {
 
       {/* Categories */}
       <div className="glass-card settings-section">
-        <h2 className="settings-section-title">🏷️ Danh mục chi tiêu</h2>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <h2 className="settings-section-title">🏷️ Danh mục chi tiêu</h2>
+          <button className="btn btn-primary" style={{ padding: '6px 12px', fontSize: '12px' }} onClick={() => { setEditingCat(null); setCatModalOpen(true); }}>
+            + Thêm mới
+          </button>
+        </div>
         <div className="cat-preview-grid">
-          {CATEGORIES.map((cat) => (
-            <div key={cat.id} className="cat-preview-item" style={{ background: cat.light, border: `1px solid ${cat.color}33` }}>
+          {categories.map((cat) => (
+            <div 
+              key={cat.id} 
+              className="cat-preview-item clickable" 
+              style={{ background: `${cat.color}22`, border: `1px solid ${cat.color}55`, cursor: 'pointer', position: 'relative' }}
+              onClick={() => handleEditCategory(cat)}
+            >
               <span>{cat.icon}</span>
               <span style={{ color: cat.color, fontSize: '12px', fontWeight: 600 }}>{cat.name}</span>
+              <button
+                className="btn-icon cat-delete-btn"
+                onClick={(e) => handleDeleteCategory(e, cat)}
+                disabled={deletingCat === cat.id}
+                title="Xóa danh mục"
+              >
+                {deletingCat === cat.id ? (
+                  <span className="spinner" style={{ width: 12, height: 12, borderWidth: 2, borderColor: `${cat.color} transparent transparent transparent` }} />
+                ) : (
+                  <Trash2 size={12} color={cat.color} />
+                )}
+              </button>
             </div>
           ))}
         </div>
@@ -158,6 +201,12 @@ export default function Settings() {
           Dữ liệu đồng bộ cloud · Powered by Supabase
         </div>
       </div>
+
+      <CategoryModal
+        isOpen={catModalOpen}
+        onClose={() => setCatModalOpen(false)}
+        editing={editingCat}
+      />
     </div>
   )
 }

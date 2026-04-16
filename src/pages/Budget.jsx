@@ -2,12 +2,11 @@ import { useState } from 'react'
 import { Save, AlertTriangle, CheckCircle } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { useStore } from '../store/useStore'
-import { CATEGORIES } from '../data/categories'
 import { formatVND, getCurrentYearMonth } from '../utils/format'
 import './Budget.css'
 
 export default function Budget() {
-  const { budgets, setBudget, getBudgetUsage } = useStore()
+  const { budgets, setBudget, getBudgetUsage, categories } = useStore()
   const { year, month } = getCurrentYearMonth()
   const [editing, setEditing] = useState({})
   const [saved, setSaved] = useState({})
@@ -104,7 +103,7 @@ export default function Budget() {
       {/* Category Budgets */}
       <div className="budget-list">
         {usage.map((u, idx) => {
-          const cat = CATEGORIES.find((c) => c.id === u.category)
+          const cat = categories.find((c) => c.id === u.category)
           if (!cat) return null
           const currentEdit = editing[cat.id]
           const isSaved = saved[cat.id]
@@ -126,7 +125,7 @@ export default function Budget() {
                 <div className="budget-cat-info">
                   <div
                     className="budget-cat-icon"
-                    style={{ background: cat.light }}
+                    style={{ background: `${cat.color}22` }}
                   >
                     {cat.icon}
                   </div>

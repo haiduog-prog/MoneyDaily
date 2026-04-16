@@ -5,7 +5,6 @@ import {
   LineChart, Line
 } from 'recharts'
 import { useStore } from '../store/useStore'
-import { CATEGORIES, getCategoryById } from '../data/categories'
 import { formatVND, formatVNDShort, formatDateShort, getCurrentYearMonth } from '../utils/format'
 import './Statistics.css'
 
@@ -35,7 +34,7 @@ const CustomBarTooltip = ({ active, payload, label }) => {
 }
 
 export default function Statistics() {
-  const { getTransactionsByMonth, getCategoryTotals, getDailyTotals, getTotalByMonth } = useStore()
+  const { getTransactionsByMonth, getCategoryTotals, getDailyTotals, getTotalByMonth, categories } = useStore()
   const now = getCurrentYearMonth()
   const [year, setYear] = useState(now.year)
   const [month, setMonth] = useState(now.month)
@@ -49,7 +48,7 @@ export default function Statistics() {
   }))
 
   // Pie chart data
-  const pieData = CATEGORIES
+  const pieData = categories
     .map((cat) => ({
       name: cat.name,
       value: categoryTotals[cat.id] || 0,

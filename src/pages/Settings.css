@@ -116,3 +116,43 @@
     margin-bottom: 0;
   }
 }
+
+.cat-preview-item {
+  transition: all var(--transition-fast);
+}
+
+.cat-preview-item:hover {
+  transform: scale(1.05);
+}
+
+.cat-preview-item:hover .cat-delete-btn {
+  opacity: 1;
+}
+
+.cat-delete-btn {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  width: 22px;
+  height: 22px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: 50%;
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: all var(--transition-fast);
+  box-shadow: var(--shadow-sm);
+  padding: 0 !important;
+}
+
+.cat-delete-btn:hover {
+  background: var(--accent-red-light);
+  border-color: var(--accent-red);
+  transform: scale(1.1);
+}
+
+.cat-delete-btn:disabled {
+  opacity: 1;
+}

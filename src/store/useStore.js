@@ -1,34 +1,33 @@
 import { create } from 'zustand'
 import { supabase } from '../lib/supabase'
 import { startOfMonth, endOfMonth, isWithinInterval, parseISO } from 'date-fns'
+import { DEFAULT_CATEGORIES, FALLBACK_CATEGORY } from '../data/categories'
 
 // --- Default budgets for first-time users ---
-const DEFAULT_BUDGETS = {
-  food: 3000000,
-  transport: 1000000,
-  shopping: 2000000,
-  entertainment: 1500000,
-  health: 500000,
-  utilities: 1000000,
-  education: 500000,
-  personal: 500000,
-  other: 500000,
-}
+const DEFAULT_BUDGET_AMOUNT = 1000000
 
 export const useStore = create((set, get) => ({
   // ===== STATE =====
   transactions: [],
-  budgets: DEFAULT_BUDGETS,  // keyed by category, for current month
-  budgetRecords: [],          // raw DB records
+  categories: [],      // user's categories from Supabase
+  budgets: {},         // keyed by category id for current month
+  budgetRecords: [],   // raw DB records
   loading: false,
   error: null,
   currentUserId: null,
 
-  // ===== INIT: load data for logged-in user =====
+  // ===== HELPERS =====
+  getCategoryById: (id) => {
+    const { categories } = get()
+    return categories.find((c) => c.id === id) || FALLBACK_CATEGORY
+  },
+
+  // ===== INIT =====
   loadUserData: async (userId) => {
     set({ loading: true, error: null, currentUserId: userId })
     try {
       await Promise.all([
+        get().fetchCategories(userId),
         get().fetchTransactions(userId),
         get().fetchBudgets(userId),
       ])
@@ -41,10 +40,81 @@ export const useStore = create((set, get) => ({
 
   clearData: () => set({
     transactions: [],
-    budgets: DEFAULT_BUDGETS,
+    categories: [],
+    budgets: {},
     budgetRecords: [],
     currentUserId: null,
   }),
+
+  // ===== CATEGORIES =====
+  fetchCategories: async (userId) => {
+    const { data, error } = await supabase
+      .from('categories')
+      .select('*')
+      .eq('user_id', userId)
+      .order('sort_order', { ascending: true })
+    if (error) throw error
+
+    if (!data || data.length === 0) {
+      // Seed default categories for new user
+      await get().seedDefaultCategories(userId)
+    } else {
+      set({ categories: data })
+    }
+  },
+
+  seedDefaultCategories: async (userId) => {
+    const seeds = DEFAULT_CATEGORIES.map((cat) => ({
+      user_id: userId,
+      name: cat.name,
+      icon: cat.icon,
+      color: cat.color,
+      sort_order: cat.sort_order,
+    }))
+    const { data, error } = await supabase
+      .from('categories')
+      .insert(seeds)
+      .select()
+    if (error) throw error
+    set({ categories: data || [] })
+  },
+
+  addCategory: async ({ name, icon, color }) => {
+    const { currentUserId, categories } = get()
+    const sortOrder = categories.length
+    const { data, error } = await supabase
+      .from('categories')
+      .insert({ user_id: currentUserId, name, icon, color, sort_order: sortOrder })
+      .select()
+      .single()
+    if (error) throw error
+    set((state) => ({ categories: [...state.categories, data] }))
+    return data
+  },
+
+  updateCategory: async (id, { name, icon, color }) => {
+    const { data, error } = await supabase
+      .from('categories')
+      .update({ name, icon, color })
+      .eq('id', id)
+      .select()
+      .single()
+    if (error) throw error
+    set((state) => ({
+      categories: state.categories.map((c) => c.id === id ? data : c),
+    }))
+  },
+
+  deleteCategory: async (id) => {
+    const { error } = await supabase
+      .from('categories')
+      .delete()
+      .eq('id', id)
+    if (error) throw error
+    set((state) => ({
+      categories: state.categories.filter((c) => c.id !== id),
+    }))
+  },
 
   // ===== TRANSACTIONS =====
   fetchTransactions: async (userId) => {
@@ -110,24 +180,19 @@ export const useStore = create((set, get) => ({
 
   // ===== BUDGETS =====
   fetchBudgets: async (userId) => {
-    const now = new Date()
-    const month = now.getMonth() + 1
-    const year = now.getFullYear()
-
     const { data, error } = await supabase
       .from('budgets')
       .select('*')
       .eq('user_id', userId)
-
     if (error) throw error
-
     const records = data || []
     set({ budgetRecords: records })
-    get()._rebuildBudgetMap(records, month, year)
+    const now = new Date()
+    get()._rebuildBudgetMap(records, now.getMonth() + 1, now.getFullYear())
   },
 
   _rebuildBudgetMap: (records, month, year) => {
-    const map = { ...DEFAULT_BUDGETS }
+    const map = {}
     records
       .filter((r) => r.month === month && r.year === year)
       .forEach((r) => { map[r.category] = r.amount })
@@ -139,7 +204,6 @@ export const useStore = create((set, get) => ({
     const existing = budgetRecords.find(
       (r) => r.category === categoryId && r.month === month && r.year === year
     )
-
     let record
     if (existing) {
       const { data, error } = await supabase
@@ -163,13 +227,12 @@ export const useStore = create((set, get) => ({
       record = data
       set((state) => ({ budgetRecords: [...state.budgetRecords, record] }))
     }
-
     set((state) => ({
       budgets: { ...state.budgets, [categoryId]: Number(amount) },
     }))
   },
 
-  // ===== MIGRATION: localStorage → Supabase =====
+  // ===== MIGRATION =====
   migrateFromLocalStorage: async (userId) => {
     try {
       const raw = localStorage.getItem('chitieuapp-storage')
@@ -178,10 +241,24 @@ export const useStore = create((set, get) => ({
       const oldTxs = parsed?.state?.transactions || []
       if (oldTxs.length === 0) return false
 
+      // Map old category keys to user's new category IDs by name matching
+      const { categories } = get()
+      const nameMap = {}
+      const oldNameMap = {
+        food: 'Ăn uống', transport: 'Di chuyển', shopping: 'Mua sắm',
+        entertainment: 'Giải trí', health: 'Y tế', utilities: 'Hóa đơn',
+        education: 'Học tập', personal: 'Cá nhân', other: 'Khác',
+      }
+      Object.entries(oldNameMap).forEach(([key, name]) => {
+        const found = categories.find((c) => c.name === name)
+        if (found) nameMap[key] = found.id
+      })
+
+      const fallbackId = categories[categories.length - 1]?.id
       const payload = oldTxs.map((tx) => ({
         user_id: userId,
         amount: Number(tx.amount),
-        category: tx.category,
+        category: nameMap[tx.category] || fallbackId,
         note: tx.note || '',
         date: tx.date,
         created_at: tx.createdAt ? new Date(tx.createdAt).toISOString() : new Date().toISOString(),
@@ -193,9 +270,7 @@ export const useStore = create((set, get) => ({
         return true
       }
       return false
-    } catch {
-      return false
-    }
+    } catch { return false }
   },
 
   // ===== SELECTORS =====
@@ -222,20 +297,22 @@ export const useStore = create((set, get) => ({
   },
 
   getBudgetUsage: (year, month) => {
-    const { budgetRecords } = get()
-    const monthBudgets = { ...DEFAULT_BUDGETS }
-    budgetRecords
-      .filter((r) => r.month === month && r.year === year)
-      .forEach((r) => { monthBudgets[r.category] = r.amount })
-
+    const { categories, budgetRecords } = get()
     const totals = get().getCategoryTotals(year, month)
-    return Object.entries(monthBudgets).map(([cat, budget]) => ({
-      category: cat,
-      budget,
-      spent: totals[cat] || 0,
-      percentage: budget > 0 ? Math.min(((totals[cat] || 0) / budget) * 100, 100) : 0,
-      isOver: (totals[cat] || 0) > budget,
-    }))
+    return categories.map((cat) => {
+      const budgetRec = budgetRecords.find(
+        (r) => r.category === cat.id && r.month === month && r.year === year
+      )
+      const budget = budgetRec ? budgetRec.amount : DEFAULT_BUDGET_AMOUNT
+      const spent = totals[cat.id] || 0
+      return {
+        category: cat.id,
+        budget,
+        spent,
+        percentage: budget > 0 ? Math.min((spent / budget) * 100, 100) : 0,
+        isOver: spent > budget,
+      }
+    })
   },
 
   getDailyTotals: (year, month) => {

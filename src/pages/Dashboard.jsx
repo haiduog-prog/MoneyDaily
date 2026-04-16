@@ -5,7 +5,6 @@ import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
 } from 'recharts'
 import { useStore } from '../store/useStore'
-import { getCategoryById, CATEGORIES } from '../data/categories'
 import {
   formatVND, formatVNDShort, formatDateShort, getCurrentYearMonth, friendlyDate
 } from '../utils/format'
@@ -34,7 +33,7 @@ const CustomTooltip = ({ active, payload, label }) => {
 
 export default function Dashboard() {
   const { getTransactionsByMonth, getTotalByMonth,
-    getCategoryTotals, getLast7DaysTotals, loading } = useStore()
+    getCategoryTotals, getLast7DaysTotals, loading, categories } = useStore()
   const { year, month } = getCurrentYearMonth()
   const [modalOpen, setModalOpen] = useState(false)
   const [editingTx, setEditingTx] = useState(null)
@@ -46,7 +45,7 @@ export default function Dashboard() {
   const recentTxs = transactions.slice(0, 5)
 
   // Top categories
-  const topCategories = CATEGORIES
+  const topCategories = categories
     .map((cat) => ({ ...cat, amount: categoryTotals[cat.id] || 0 }))
     .filter((c) => c.amount > 0)
     .sort((a, b) => b.amount - a.amount)
@@ -170,7 +169,7 @@ export default function Dashboard() {
                 return (
                   <div key={cat.id} className="top-cat-item">
                     <div className="top-cat-rank" style={{ color: cat.color }}>{i + 1}</div>
-                    <div className="top-cat-icon" style={{ background: cat.light }}>{cat.icon}</div>
+                    <div className="top-cat-icon" style={{ background: `${cat.color}22` }}>{cat.icon}</div>
                     <div className="top-cat-info">
                       <div className="top-cat-name">{cat.name}</div>
                       <div className="progress-bar-container" style={{ marginTop: '4px' }}>
