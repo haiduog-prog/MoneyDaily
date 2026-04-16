@@ -175,6 +175,7 @@ input, select, textarea {
 
 .main-content {
   flex: 1;
+  min-width: 0;
   margin-left: var(--sidebar-width);
   min-height: 100vh;
   display: flex;
@@ -184,6 +185,7 @@ input, select, textarea {
 
 .page-content {
   flex: 1;
+  min-width: 0;
   padding: var(--space-6);
   max-width: 1200px;
   width: 100%;
