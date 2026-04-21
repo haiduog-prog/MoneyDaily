@@ -1,15 +1,18 @@
 import { useState } from 'react'
-import { Pencil, Trash2 } from 'lucide-react'
+import { Pencil, Trash2, CloudOff } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { useStore } from '../../store/useStore'
 import { formatVND } from '../../utils/format'
 import './TransactionItem.css'
 
 export default function TransactionItem({ tx, onEdit }) {
-  const { deleteTransaction, getCategoryById } = useStore()
+  const { deleteTransaction, getCategoryById, syncQueue } = useStore()
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const cat = getCategoryById(tx.category)
+
+  const isUnsynced = tx.id.toString().startsWith('temp-') || 
+                     syncQueue.some(q => q.id === tx.id || q.tempId === tx.id)
 
   const handleDelete = async () => {
     if (confirmDelete) {
@@ -41,6 +44,11 @@ export default function TransactionItem({ tx, onEdit }) {
         <div className="tx-category-badge" style={{ background: `${cat.color}22`, color: cat.color }}>
           {cat.name}
         </div>
+        {isUnsynced && (
+          <span style={{ color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '11px' }}>
+            <CloudOff size={11} /> Chờ đồng bộ
+          </span>
+        )}
       </div>
       <div className="tx-amount">-{formatVND(tx.amount)}</div>
       <div className="tx-actions">

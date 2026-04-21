@@ -10,6 +10,7 @@ import Statistics from './pages/Statistics'
 import Budget from './pages/Budget'
 import Settings from './pages/Settings'
 import AuthPage from './pages/Auth/AuthPage'
+import OfflineStatus from './components/Status/OfflineStatus'
 
 // --- Loading screen ---
 function LoadingScreen() {
@@ -36,6 +37,13 @@ function AppLayout() {
   const { loadUserData, clearData, migrateFromLocalStorage } = useStore()
 
   useEffect(() => {
+    // Connectivity listeners
+    const handleOnline = () => useStore.getState().setOnline(true)
+    const handleOffline = () => useStore.getState().setOnline(false)
+
+    window.addEventListener('online', handleOnline)
+    window.addEventListener('offline', handleOffline)
+
     if (user) {
       // Load data then try migrate local storage
       loadUserData(user.id).then(async () => {
@@ -45,10 +53,20 @@ function AppLayout() {
           loadUserData(user.id)
         }
       })
+      
+      // Real-time subscriptions
+      useStore.getState().subscribeToChanges(user.id)
     } else if (!loading) {
       clearData()
+      useStore.getState().unsubscribeFromChanges()
     }
-  }, [user?.id])
+
+    return () => {
+      useStore.getState().unsubscribeFromChanges()
+      window.removeEventListener('online', handleOnline)
+      window.removeEventListener('offline', handleOffline)
+    }
+  }, [user?.id, loading])
 
   if (loading) return <LoadingScreen />
   if (!user) return <Navigate to="/auth" replace />
@@ -57,6 +75,7 @@ function AppLayout() {
     <div className="app-container">
       <Sidebar />
       <main className="main-content">
+        <OfflineStatus />
         <Routes>
           <Route path="/" element={<Dashboard />} />
           <Route path="/transactions" element={<Transactions />} />

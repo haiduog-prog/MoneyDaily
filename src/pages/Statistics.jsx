@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import {
   PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer,
   BarChart, Bar, XAxis, YAxis, CartesianGrid,
@@ -34,10 +34,14 @@ const CustomBarTooltip = ({ active, payload, label }) => {
 }
 
 export default function Statistics() {
-  const { getTransactionsByMonth, getCategoryTotals, getDailyTotals, getTotalByMonth, categories } = useStore()
+  const { getTransactionsByMonth, getCategoryTotals, getDailyTotals, getTotalByMonth, categories, ensureMonthDataLoaded } = useStore()
   const now = getCurrentYearMonth()
   const [year, setYear] = useState(now.year)
   const [month, setMonth] = useState(now.month)
+
+  useEffect(() => {
+    ensureMonthDataLoaded(year, month)
+  }, [year, month, ensureMonthDataLoaded])
 
   const transactions = getTransactionsByMonth(year, month)
   const total = getTotalByMonth(year, month)

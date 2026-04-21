@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Plus, Search, Filter, X } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useStore } from '../store/useStore'
@@ -10,10 +10,15 @@ import './Transactions.css'
 const MONTHS = Array.from({ length: 12 }, (_, i) => i + 1)
 
 export default function Transactions() {
-  const { getTransactionsByMonth, getTotalByMonth, categories } = useStore()
+  const { getTransactionsByMonth, getTotalByMonth, categories, ensureMonthDataLoaded } = useStore()
   const now = getCurrentYearMonth()
   const [year, setYear] = useState(now.year)
   const [month, setMonth] = useState(now.month)
+
+  useEffect(() => {
+    ensureMonthDataLoaded(year, month)
+  }, [year, month, ensureMonthDataLoaded])
+
   const [search, setSearch] = useState('')
   const [filterCat, setFilterCat] = useState('all')
   const [modalOpen, setModalOpen] = useState(false)
